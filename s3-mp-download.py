@@ -45,7 +45,7 @@ def do_part_download(args):
                  chunk size, and part number
     """
     bucket_name, key_name, fname, min_byte, max_byte, split, secure, max_tries, current_tries = args
-    conn = boto.connect_s3(calling_format=OrdinaryCallingFormat())
+    conn = boto.connect_s3()
     conn.is_secure = secure
 
     # Make the S3 request
@@ -107,7 +107,6 @@ def main(src, dest, num_processes=2, split=32, force=False, verbose=False, quiet
 
     # Split out the bucket and the key
     s3 = boto.connect_s3()
-    s3 = boto.connect_s3(calling_format=OrdinaryCallingFormat())
     s3.is_secure = secure
     logger.debug("split_rs: %s" % str(split_rs))
     bucket = s3.lookup(split_rs.netloc)
@@ -159,7 +158,7 @@ def main(src, dest, num_processes=2, split=32, force=False, verbose=False, quiet
             logger.error(err)
 
 if __name__ == "__main__":
-    logging.basicConfig(level=logging.INFO)
+    logging.basicConfig(level=logging.DEBUG)
     args = parser.parse_args()
     arg_dict = vars(args)
     if arg_dict['quiet'] == True:
