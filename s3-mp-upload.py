@@ -197,12 +197,9 @@ def main(src, dest, num_processes=DEFAULTS["p_transfers"], force=False,
         # Destination is partial-path, not object
         source_file = os.path.split(src.name)[1]
         s3_dest_obj = os.path.join(s3_dest_path, source_file)
-    elif s3_dest_path.startswith("/") and s3_dest_path.count("/") == 1:
-        # Destination is named object, in bucket root
-        s3_dest_obj = s3_dest_path.lstrip("/")
     else:
-        # Full path
-        s3_dest_obj = s3_dest_path
+        # Full path (always strip leading /)
+        s3_dest_obj = s3_dest_path.lstrip("/")
 
     # Check if destination object exists
     try:
