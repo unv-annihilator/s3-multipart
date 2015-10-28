@@ -190,19 +190,25 @@ def main(src, dest, num_processes=DEFAULTS["p_transfers"], force=False,
 
     # Generate a destination object name, if necessary
     if not s3_dest_path or s3_dest_path == "/":
+        # Destination is bucket root
         source_file = os.path.split(src.name)[1]
         s3_dest_obj = source_file
     elif s3_dest_path.endswith("/"):
+        # Destination is partial-path, not object
         source_file = os.path.split(src.name)[1]
         s3_dest_obj = os.path.join(s3_dest_path, source_file)
+    elif s3_dest_path.startswith("/") and s3_dest_path.count("/") == 1:
+        # Destination is named object, in bucket root
+        s3_dest_obj = s3_dest_path.lstrip("/")
     else:
+        # Full path
         s3_dest_obj = s3_dest_path
 
     # Check if destination object exists
     try:
         client.get_object(Bucket=s3_bucket, Key=s3_dest_obj)
     except ClientError as e:
-        if "NoSuchKey" in e.message:
+        if "NoSuchKey" in str(e):
             # It's ok if the object doesn't exist; We'll create it.
             pass
         else:
