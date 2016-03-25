@@ -14,7 +14,7 @@ import re
 import sys
 import threading
 import time
-import urlparse
+from urllib.parse import urlsplit
 
 import boto3
 from boto3.s3.transfer import TransferConfig, S3Transfer
@@ -125,6 +125,7 @@ def chunk_bytes(chunk_string, default_unit="byte", default_multiplier="MiB"):
 
     return UNIT_MULTIPLIERS[default_unit] * (UNIT_MULTIPLIERS[matching_multiplier] * count)
 
+
 # pylint: disable=C0111,R0903
 class ProgressPercentage(object):
     def __init__(self, filename):
@@ -132,6 +133,7 @@ class ProgressPercentage(object):
         self._size = float(os.path.getsize(filename))
         self._seen_so_far = 0
         self._lock = threading.Lock()
+
     def __call__(self, bytes_amount):
         # To simplify we'll assume this is hooked up
         # to a single filename.
@@ -142,6 +144,7 @@ class ProgressPercentage(object):
                 "\r%s  %s / %s  (%.2f%%)" % (self._filename, self._seen_so_far,
                                              self._size, percentage))
             sys.stdout.flush()
+
 
 #pylint: disable=R0914,W0613
 def main(src, dest, num_processes=DEFAULTS["p_transfers"], force=False,
@@ -159,6 +162,7 @@ def main(src, dest, num_processes=DEFAULTS["p_transfers"], force=False,
     :param str chunk: A string describing the chunk size to use.
     :param bool reduced_redundancy: Unused parameter for compatibility purposes.
     :param bool secure: Unused parameter for compatibility purposes.
+    :param int max_tries: Number of max retries for download/upload.
     :param bool verbose: Set to true, for more output.
     :param bool quiet: Set to true, for less output.
     :param int retry_sleep: The number of seconds to sleep between upload attempts, if there is a failure.
@@ -170,7 +174,7 @@ def main(src, dest, num_processes=DEFAULTS["p_transfers"], force=False,
     chunk_size = chunk_bytes(chunk)
 
     # Get S3 path
-    dest_uri_parts = urlparse.urlsplit(dest)
+    dest_uri_parts = urlsplit(dest)
     if dest_uri_parts.scheme != "s3":
         error_message = "Destination needs to be an S3 url!: {0}".format(dest)
         LOG.error(error_message)
@@ -214,7 +218,7 @@ def main(src, dest, num_processes=DEFAULTS["p_transfers"], force=False,
     else:
         # Key exists
         if not force:
-            error_message = "{0} alredy exists in {1}. Use --force to overwrite!".format(s3_dest_obj, s3_bucket)
+            error_message = "{0} already exists in {1}. Use --force to overwrite!".format(s3_dest_obj, s3_bucket)
             LOG.error(error_message)
             raise RuntimeError(error_message)
 
@@ -270,7 +274,7 @@ if __name__ == "__main__":
         description="Upload large files to S3 using parallel chunked transfers",)
 
     parser.add_argument("src",
-                        type=file,
+                        type=argparse.FileType('r'),
                         help="Source file to transfer",)
 
     parser.add_argument("dest",
