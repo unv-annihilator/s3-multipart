@@ -64,6 +64,8 @@ DEFAULTS = {
     "max_tries": 10,
     "split": "50 MiB",
     "chunk_threshold": "50 MiB",
+    # Default to US Standard/us-east-1
+    "region": "us-west-1",
     # Wait 10 seconds before initial retry, if there was an error during upload.
     # NOTE: This value will double with each failure
     "retry_sleep": 10,
@@ -150,7 +152,7 @@ class ProgressPercentage(object):
 def main(src, dest, num_processes=DEFAULTS["p_transfers"], force=False,
          chunk=DEFAULTS["split"], reduced_redundancy=False, secure=True,
          max_tries=DEFAULTS["max_tries"], verbose=False, quiet=False,
-         retry_sleep=DEFAULTS["retry_sleep"]):
+         retry_sleep=DEFAULTS["retry_sleep"], region=DEFAULTS["region"]):
     """
     Send a file to S3, potentially in parallel chunked transfers.
 
@@ -167,6 +169,7 @@ def main(src, dest, num_processes=DEFAULTS["p_transfers"], force=False,
     :param bool quiet: Set to true, for less output.
     :param int retry_sleep: The number of seconds to sleep between upload attempts, if there is a failure.
     (This value is doubled with each failure)
+    :param str region: The region of the bucket destination.
     :return None
     :rtype None
     """
@@ -183,7 +186,7 @@ def main(src, dest, num_processes=DEFAULTS["p_transfers"], force=False,
     s3_bucket = dest_uri_parts.netloc
     s3_dest_path = dest_uri_parts.path
 
-    client = boto3.client("s3", use_ssl=True)
+    client = boto3.client("s3", region_name=region, use_ssl=True)
 
     # Check that bucket exists
     try:
@@ -317,6 +320,10 @@ if __name__ == "__main__":
     parser.add_argument("-q", "--quiet",
                         action="store_true",
                         help="Print less output",)
+
+    parser.add_argument("-r", "--region",
+                        type=str, default=DEFAULTS["region"],
+                        help="Region name where the bucket is located.(default: {0})".format(DEFAULTS["region"]),)
 
     args = parser.parse_args()
     if args.quiet:
